@@ -22,9 +22,11 @@
 #ifndef SYSTEM_H
 #define SYSTEM_H
 
+#include <unistd.h>
 #include<string>
 #include<thread>
 #include<opencv2/core/core.hpp>
+#include "Thirdparty/g2o/g2o/types/se2.h"
 
 #include "Tracking.h"
 #include "FrameDrawer.h"
@@ -67,7 +69,7 @@ public:
     cv::Mat TrackMonocular(const cv::Mat &im, const double &timestamp);
 
 
-    cv::Mat TrackOdomMono(const cv::Mat &im, const Se2 &odo, const double timestamp);
+    cv::Mat TrackOdomMono(const cv::Mat &im, const g2o::SE2 &odo, const double timestamp);
 
     // This stops local mapping thread (map building) and performs only camera tracking.
     void ActivateLocalizationMode();
@@ -100,6 +102,7 @@ public:
 
     // LETS BEGIN HERE
     void SaveKeyFrameTrajectoryVN(const string &filename);
+    void SaveKeyFrameTrajectoryTUM_VN(const string &filename);
     // END
 
     // Save camera trajectory in the KITTI dataset format.
@@ -107,6 +110,8 @@ public:
     // Call first Shutdown()
     // See format details at: http://www.cvlibs.net/datasets/kitti/eval_odometry.php
     void SaveTrajectoryKITTI(const string &filename);
+
+    void SaveKeyFrameTrajectoryOpenLoris(const string &filename);
 
     // TODO: Save/Load functions
     // SaveMap(const string &filename);

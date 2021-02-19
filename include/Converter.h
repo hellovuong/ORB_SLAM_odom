@@ -26,6 +26,7 @@
 #include<Eigen/Dense>
 #include"Thirdparty/g2o/g2o/types/types_six_dof_expmap.h"
 #include"Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
+#include"Thirdparty/g2o/g2o/types/se2.h"
 
 namespace ORB_SLAM2
 {
@@ -34,6 +35,22 @@ class Converter
 {
 public:
     static std::vector<cv::Mat> toDescriptorVector(const cv::Mat &Descriptors);
+
+    static g2o::SE2 toSE2(const cv::Mat &cvT);
+    static double normalize_angle(double theta)
+    {
+        if (theta >= -M_PI && theta < M_PI)
+        return theta;
+
+        double multiplier = floor(theta / (2*M_PI));
+        theta = theta - multiplier*2*M_PI;
+        if (theta >= M_PI)
+            theta -= 2*M_PI;
+        if (theta < -M_PI)
+            theta += 2*M_PI;
+
+        return theta;
+    }
 
     static g2o::SE3Quat toSE3Quat(const cv::Mat &cvT);
     static g2o::SE3Quat toSE3Quat(const g2o::Sim3 &gSim3);
@@ -50,6 +67,14 @@ public:
     static Eigen::Matrix<double,3,3> toMatrix3d(const cv::Mat &cvMat3);
 
     static std::vector<float> toQuaternion(const cv::Mat &M);
+};
+namespace Constants
+{
+   static cv::Mat bTc = (cv::Mat_<float>(4,4) <<
+               9.9792816252667338e-03f, 6.5348103708624539e-03f,9.9992885256485176e-01f, 2.2648368490900000e-01f,
+               -9.9982014658446139e-01f, 1.6192923276330706e-02f,9.8723715283343672e-03f, -5.1141940356500000e-02f,
+               -1.6127257115523985e-02f, -9.9984753112121250e-01f,6.6952288046080444e-03f, 9.1600000000000004e-01f, 
+               0.0f, 0.0f, 0.0f,1.0f);
 };
 
 }// namespace ORB_SLAM

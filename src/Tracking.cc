@@ -76,7 +76,8 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     }
     DistCoef.copyTo(mDistCoef);
 
-
+/*   
+    //Uncomment it to run DatasetsRoom
     cv::Mat tbc(3,1,CV_32F);
     tbc.at<float>(0) = fSettings["Tbc.tbc.x"];
     tbc.at<float>(1) = fSettings["Tbc.tbc.y"];
@@ -93,10 +94,13 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mTcb = mTbc.clone();
     mTcb.rowRange(0,3).colRange(0,3) = Rbc.t();
     mTcb.rowRange(0,3).col(3) = -Rbc.t()*tbc;
-
-
     mbf = fSettings["Camera.bf"];
-
+*/    
+     
+    // Uncomment this for OpenLoris
+    mTbc = Constants::bTc;
+    mTcb = Constants::bTc.inv();
+    
     float fps = fSettings["Camera.fps"];
     if(fps==0)
         fps=30;
@@ -212,7 +216,7 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
     return mCurrentFrame.mTcw.clone();
 }
 
-cv::Mat Tracking::GrabImageOdomMono(const cv::Mat &im, const Se2 &odo, const double timestamp)
+cv::Mat Tracking::GrabImageOdomMono(const cv::Mat &im, const g2o::SE2 &odo, const double timestamp)
 {
     mImGray = im;
 
@@ -941,14 +945,17 @@ bool Tracking::TrackWithMotionModelOdom()
             kfj->SetPoseByOdomTo(kfi);
         }
         KeyFrame* lastKf = vKfs[vKfs.size()-1];
-        Se2 lastOdom = lastKf->odom;
-        Se2 lastFrameOdom = mLastFrame.odom;
-        Se2 dOdom = lastOdom - lastFrameOdom;
+        g2o::SE2 lastOdom = lastKf->odom;
+        g2o::SE2 lastFrameOdom = mLastFrame.odom;
+        g2o::SE2 dOdom = lastOdom - lastFrameOdom;
         cv::Mat dCvOdom = mTcb * dOdom.toCvSE3() * mTbc;
         mLastFrame.SetPose(dCvOdom * lastKf->GetPose());
     }
-    Se2 dOdom = mLastFrame.odom - mCurrentFrame.odom;
+    g2o::SE2 dOdom = mLastFrame.odom - mCurrentFrame.odom;
+    std::cout << mTcb << std::endl;
     mVelocityOdom = mTcb * dOdom.toCvSE3() * mTbc;
+    std::cout<<mVelocityOdom<<std::endl;
+    std::cout<<mVelocityOdom*mLastFrame.mTcw<<std::endl;
     //mCurrentFrame.SetPose(mLastFrame.mTcw);
     mCurrentFrame.SetPose(mVelocityOdom*mLastFrame.mTcw);
     // END
@@ -1064,8 +1071,9 @@ bool Tracking::NeedNewKeyFrame()
         return false;
 
 
-    Se2 dOdom = mCurrentFrame.odom - mCurrentFrame.mpReferenceKF->odom;
-    bool c5 = dOdom.theta >= 0.0349f; // Larger than 2 degree
+    g2o::SE2 dOdom = mCurrentFrame.odom - mCurrentFrame.mpReferenceKF->odom;
+    //bool c5 = dOdom.theta >= 0.0349f; // Larger than 2 degree
+    bool c5 = dOdom.rotation().angle() >= 0.0349f;
     //cv::Mat cTc = Config::cTb * toT4x4(dOdo.x, dOdo.y, dOdo.theta) * Config::bTc;
     cv::Mat Tcc = mTcb * dOdom.toCvSE3() * mTbc;
     cv::Mat xy = Tcc.rowRange(0,2).col(3);

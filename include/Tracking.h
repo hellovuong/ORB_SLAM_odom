@@ -60,7 +60,7 @@ public:
     // Preprocess the input and call Track(). Extract features and performs stereo matching.
     cv::Mat GrabImageMonocular(const cv::Mat &im, const double &timestamp);
 
-    cv::Mat GrabImageOdomMono(const cv::Mat &im, const Se2 &odo, const double timestamp);
+    cv::Mat GrabImageOdomMono(const cv::Mat &im, const g2o::SE2 &odo, const double timestamp);
 
     void SetLocalMapper(LocalMapping* pLocalMapper);
     void SetLoopClosing(LoopClosing* pLoopClosing);

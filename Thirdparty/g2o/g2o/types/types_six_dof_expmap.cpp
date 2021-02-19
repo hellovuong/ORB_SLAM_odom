@@ -49,6 +49,18 @@ Vector3d unproject2d(const Vector2d& v)  {
   return res;
 }
 
+CameraParameters::CameraParameters() :  focal_length(1.0), 
+                                        principle_point(Vector2D(0., 0.)),
+                                        baseline(0.5) {}
+
+Vector2d CameraParameters::cam_map(const Vector3d & trans_xyz) const {
+  Vector2d proj = project2d(trans_xyz);
+  Vector2d res;
+  res[0] = proj[0] * focal_length + principle_point[0];
+  res[1] = proj[1] * focal_length + principle_point[1];
+  return res;
+}
+
 VertexSE3Expmap::VertexSE3Expmap() : BaseVertex<6, SE3Quat>() {
 }
 

@@ -120,7 +120,7 @@ public:
     // The following variables are accesed from only 1 thread or never change (no mutex needed).
 public:
 
-    Se2 odom;
+    g2o::SE2 odom;
     cv::Mat Tbc;
 
 

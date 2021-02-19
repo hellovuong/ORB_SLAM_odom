@@ -31,12 +31,16 @@
 // Added EdgeSE3ProjectXYZOnlyPose (unary edge to optimize only the camera pose)
 // Added EdgeStereoSE3ProjectXYZOnlyPose (unary edge to optimize only the camera pose)
 
+
+
 #ifndef G2O_SIX_DOF_TYPES_EXPMAP
 #define G2O_SIX_DOF_TYPES_EXPMAP
 
 #include "../core/base_vertex.h"
 #include "../core/base_binary_edge.h"
 #include "../core/base_unary_edge.h"
+#include "../core/eigen_types.h"
+#include "../types/g2o_types_sba_api.h"
 #include "se3_ops.h"
 #include "se3quat.h"
 #include "types_sba.h"
@@ -46,11 +50,43 @@ namespace g2o {
 namespace types_six_dof_expmap {
 void init();
 }
+class G2O_TYPES_SBA_API_H CameraParameters : public g2o::Parameter
+{
+  public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    CameraParameters();
 
-using namespace Eigen;
+    CameraParameters(double focal_length,
+        const Vector2D & principle_point,
+        double baseline)
+      : focal_length(focal_length),
+      principle_point(principle_point),
+      baseline(baseline){}
 
-typedef Matrix<double, 6, 6> Matrix6d;
+    Vector2D cam_map (const Vector3D & trans_xyz) const;
 
+    Vector3D stereocam_uvu_map (const Vector3D & trans_xyz) const;
+
+    virtual bool read (std::istream& is){
+      is >> focal_length;
+      is >> principle_point[0];
+      is >> principle_point[1];
+      is >> baseline;
+      return true;
+    }
+
+    virtual bool write (std::ostream& os) const {
+      os << focal_length << " ";
+      os << principle_point.x() << " ";
+      os << principle_point.y() << " ";
+      os << baseline << " ";
+      return true;
+    }
+
+    double focal_length;
+    Vector2D principle_point;
+    double baseline;
+};
 
 /**
  * \brief SE3 Vertex parameterized internally with a transformation matrix

@@ -669,7 +669,8 @@ bool Initializer::ReconstructWithOdom(vector<bool> &vbMatchesInliers, cv::Mat &K
 
     cv::Mat R1;
     cv::Mat t1;
-    Se2 odom21 = odom1 - odom2;
+    g2o::SE2 odom21 = odom1 - odom2;
+    //std::cout<< Tbc << std::endl;
     cv::Mat T1 = Tbc.inv() * odom21.toCvSE3() * Tbc;
     R1 = T1.rowRange(0,3).colRange(0,3);
     t1 = T1.rowRange(0,3).col(3);

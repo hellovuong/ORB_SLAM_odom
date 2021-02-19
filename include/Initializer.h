@@ -47,8 +47,8 @@ public:
     bool InitializeWithOdom(const Frame &CurrentFrame, const vector<int> &vMatches12,
                             cv::Mat &R21, cv::Mat &t21, vector<cv::Point3f> &vP3D, vector<bool> &vbTriangulated);
 
-    Se2 odom1;
-    Se2 odom2;
+    g2o::SE2 odom1;
+    g2o::SE2 odom2;
     cv::Mat Tbc;
     // END
 

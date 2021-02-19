@@ -148,4 +148,15 @@ std::vector<float> Converter::toQuaternion(const cv::Mat &M)
     return v;
 }
 
+g2o::SE2 Converter::toSE2(const cv::Mat &cvT)
+{
+    double yaw = std::atan2(cvT.at<float>(1,0), cvT.at<float>(0,0)); // https://stackoverflow.com/questions/15022630/how-to-calculate-the-angle-from-rotation-matrix
+    double theta = Converter::normalize_angle(yaw);
+    double x = cvT.at<float>(0,3);
+    double y = cvT.at<float>(1,3);
+    Eigen::Matrix<double,3,1> pose_vec; 
+    pose_vec << x, y, theta;
+    g2o::SE2 pose(pose_vec);
+    return pose;
+}
 } //namespace ORB_SLAM

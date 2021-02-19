@@ -118,3 +118,7 @@ add_executable(odom_mono_nv
 Examples/OdomMono/odom_mono_nv.cc)
 target_link_libraries(odom_mono_nv ${PROJECT_NAME})
 
+add_executable(mono_odom
+Examples/Monocular/mono_odom.cc)
+target_link_libraries(mono_odom ${PROJECT_NAME})
+

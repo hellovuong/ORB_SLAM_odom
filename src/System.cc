@@ -166,7 +166,7 @@ cv::Mat System::TrackMonocular(const cv::Mat &im, const double &timestamp)
     return Tcw;
 }
 
-cv::Mat System::TrackOdomMono(const cv::Mat &im, const Se2 &odo, const double timestamp)
+cv::Mat System::TrackOdomMono(const cv::Mat &im, const g2o::SE2 &odo, const double timestamp)
 {
     if(mSensor!=MONOCULAR)
     {
@@ -320,6 +320,41 @@ void System::SaveTrajectoryTUM(const string &filename)
     cout << endl << "trajectory saved!" << endl;
 }
 
+void System::SaveKeyFrameTrajectoryOpenLoris(const string &filename)
+{
+    cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
+
+    vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
+
+    // Transform all keyframes so that the first keyframe is at the origin.
+    // After a loop closure the first keyframe might not be at the origin.
+    //cv::Mat Two = vpKFs[0]->GetPoseInverse();
+
+    ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+    for(size_t i=0; i<vpKFs.size(); i++)
+    {
+        KeyFrame* pKF = vpKFs[i];
+
+       // pKF->SetPose(pKF->GetPose()*Two);
+
+        if(pKF->isBad())
+            continue;
+        cv::Mat Tw0b = Constants::bTc * ((Constants::bTc * pKF->GetPose()).inv()) ; // Twb = Twc*Tcb & Tw0b = Tcb * Twb    : w is world in Cam system, w0 is world in Body system
+        cv::Mat R = Tw0b.rowRange(0,3).colRange(0,3);
+        vector<float> q = Converter::toQuaternion(R);
+        cv::Mat t = Tw0b.rowRange(0,3).col(3);
+        f << setprecision(6) << pKF->mTimeStamp << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << t.at<float>(2)
+          << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
+
+    }
+
+    f.close();
+    cout << endl << "trajectory saved!" << endl;
+}
 
 void System::SaveKeyFrameTrajectoryTUM(const string &filename)
 {
@@ -383,13 +418,55 @@ void System::SaveKeyFrameTrajectoryVN(const string &filename)
         //cv::Mat Twb = (pKF->Tbc * pKF->GetPose()).inv();
         cv::Mat Twc = pKF->GetPoseInverse();
         cv::Mat Twb = pKF->Tbc * Twc * pKF->Tbc.inv();
-        Se2 se2wb;
-        se2wb.fromCvSE3(Twb);
+        g2o::SE2 se2wb;
+        se2wb = Converter::toSE2(Twb);
+        
+        //se2wb.fromCvSE3(Twb);
+        std::cout << Twb << std::endl << std::endl;
+        std::cout << se2wb.translation().x() << " " << se2wb.translation().y() << " " << se2wb.rotation().angle()
+                  << std::endl;
         float zwb = Twb.at<float>(2,3);
 
         f << pKF->mnFrameId << " " << setprecision(7)
-          << se2wb.x << " " << se2wb.y << " " << zwb << " " << se2wb.theta
+          << se2wb.translation().x() << " " << se2wb.translation().y() << " " << zwb << " " << se2wb.rotation().angle()
           << endl;
+
+    }
+
+    f.close();
+    cout << endl << "trajectory saved!" << endl;
+}
+
+void System::SaveKeyFrameTrajectoryTUM_VN(const string &filename)
+{
+    cout << endl << "Saving keyframe trajectory to " << filename << " ..." << endl;
+
+    vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
+
+    // Transform all keyframes so that the first keyframe is at the origin.
+    // After a loop closure the first keyframe might not be at the origin.
+    //cv::Mat Two = vpKFs[0]->GetPoseInverse();
+
+    ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+    for(size_t i=0; i<vpKFs.size(); i++)
+    {
+        KeyFrame* pKF = vpKFs[i];
+
+       // pKF->SetPose(pKF->GetPose()*Two);
+
+        if(pKF->isBad())
+            continue;
+
+        cv::Mat R = pKF->GetRotation().t();
+        vector<float> q = Converter::toQuaternion(R);
+        cv::Mat t = pKF->GetCameraCenter();
+        // GT of Datasets Room z = 0
+        f << setprecision(6) << pKF->mnFrameId << setprecision(7) << " " << t.at<float>(0) << " " << t.at<float>(1) << " " << 0
+          << " " << q[0] << " " << q[1] << " " << q[2] << " " << q[3] << endl;
 
     }
 

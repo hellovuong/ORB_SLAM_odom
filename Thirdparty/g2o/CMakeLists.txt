@@ -44,14 +44,14 @@ ENDIF(UNIX)
 
 # Eigen library parallelise itself, though, presumably due to performance issues
 # OPENMP is experimental. We experienced some slowdown with it
-FIND_PACKAGE(OpenMP)
-SET(G2O_USE_OPENMP OFF CACHE BOOL "Build g2o with OpenMP support (EXPERIMENTAL)")
-IF(OPENMP_FOUND AND G2O_USE_OPENMP)
-  SET (G2O_OPENMP 1)
-  SET(g2o_C_FLAGS "${g2o_C_FLAGS} ${OpenMP_C_FLAGS}")
-  SET(g2o_CXX_FLAGS "${g2o_CXX_FLAGS} -DEIGEN_DONT_PARALLELIZE ${OpenMP_CXX_FLAGS}")
-  MESSAGE(STATUS "Compiling with OpenMP support")
-ENDIF(OPENMP_FOUND AND G2O_USE_OPENMP)
+# FIND_PACKAGE(OpenMP)
+# SET(G2O_USE_OPENMP OFF CACHE BOOL "Build g2o with OpenMP support (EXPERIMENTAL)")
+# IF(OPENMP_FOUND AND G2O_USE_OPENMP)
+#   SET (G2O_OPENMP 1)
+#   SET(g2o_C_FLAGS "${g2o_C_FLAGS} ${OpenMP_C_FLAGS}")
+#   SET(g2o_CXX_FLAGS "${g2o_CXX_FLAGS} -DEIGEN_DONT_PARALLELIZE ${OpenMP_CXX_FLAGS}")
+#   MESSAGE(STATUS "Compiling with OpenMP support")
+# ENDIF(OPENMP_FOUND AND G2O_USE_OPENMP)
 
 # Compiler specific options for gcc
 SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3 -march=native") 
@@ -65,21 +65,65 @@ SET(g2o_CXX_FLAGS "${g2o_CXX_FLAGS} -Wall -W")
 SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${g2o_CXX_FLAGS}")
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${g2o_C_FLAGS}")
 
+# For building the CHOLMOD / CSPARSE solvers
+FIND_PACKAGE(Cholmod REQUIRED)
+FIND_PACKAGE(SuiteSparse REQUIRED)
+FIND_PACKAGE(BLAS REQUIRED)
+FIND_PACKAGE(LAPACK REQUIRED)
+IF(CHOLMOD_FOUND AND BLAS_FOUND AND LAPACK_FOUND)
+  MESSAGE(STATUS "Found CHOLMOD and its dependencies")
+  SET(CHOLMOD_FOUND TRUE)
+ELSE()
+MESSAGE(STATUS " Not found CHOLMOD and its dependencies")
+  SET(CHOLMOD_FOUND FALSE)
+ENDIF()
+SET(CHOLMOD_INCLUDE_DIR ${G2O_CHOLMOD_INCLUDE})
+
+FIND_PACKAGE(CSparse)
+IF(CSPARSE_FOUND)
+  MESSAGE(STATUS "Found CSparse")
+  SET(BUILD_CSPARSE OFF CACHE BOOL "Build local CSparse library")
+ELSE(CSPARSE_FOUND)
+  SET(BUILD_CSPARSE ON CACHE BOOL "Build local CSparse library")
+  IF(BUILD_CSPARSE)
+    SET(CSPARSE_FOUND TRUE)
+  ENDIF()
+ENDIF(CSPARSE_FOUND)
+OPTION(BUILD_LGPL_SHARED_LIBS "Build LGPL Code as Shared Libraries (LGPL Code)" ON)
+SET (G2O_LGPL_LIB_TYPE STATIC)
+IF (BUILD_LGPL_SHARED_LIBS)
+  SET (G2O_LGPL_LIB_TYPE SHARED)
+ELSE()
+  MESSAGE(STATUS "Building LGPL code as static library (affects license of the binary)")
+ENDIF()
+SET(CSPARSE_INCLUDE_DIR ${G2O_CSPARSE_INCLUDE})
+
 # Find Eigen3
 SET(EIGEN3_INCLUDE_DIR ${G2O_EIGEN3_INCLUDE})
-FIND_PACKAGE(Eigen3 3.1.0 REQUIRED)
+FIND_PACKAGE(Eigen3 REQUIRED)
 IF(EIGEN3_FOUND)
+  MESSAGE(STATUS "Found Eigen at ${EIGEN3_INCLUDE_DIR}")
   SET(G2O_EIGEN3_INCLUDE ${EIGEN3_INCLUDE_DIR} CACHE PATH "Directory of Eigen3")
 ELSE(EIGEN3_FOUND)
   SET(G2O_EIGEN3_INCLUDE "" CACHE PATH "Directory of Eigen3")
 ENDIF(EIGEN3_FOUND)
 
 # Generate config.h
+SET(G2O_OPENGL_FOUND ${OPENGL_FOUND})
+SET(G2O_HAVE_CHOLMOD ${CHOLMOD_FOUND})
+SET(G2O_HAVE_CSPARSE ${CSPARSE_FOUND})
+SET(G2O_SHARED_LIBS ${BUILD_SHARED_LIBS})
+SET(G2O_LGPL_SHARED_LIBS ${BUILD_LGPL_SHARED_LIBS})
 SET(G2O_CXX_COMPILER "${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER}")
-configure_file(config.h.in ${g2o_SOURCE_DIR}/config.h)
+configure_file(config.h.in ${PROJECT_BINARY_DIR}/g2o/config.h)
+include_directories(${PROJECT_BINARY_DIR})
+INSTALL(FILES ${PROJECT_BINARY_DIR}/g2o/config.h DESTINATION ${CMAKE_INSTALL_PREFIX}/include/g2o)
 
 # Set up the top-level include directories
 INCLUDE_DIRECTORIES(
+${SUITESPARSE_INCLUDE_DIRS}
+${G2O_CHOLMOD_INCLUDE}
+${G2O_CSPARSE_INCLUDE}
 ${g2o_SOURCE_DIR}/core
 ${g2o_SOURCE_DIR}/types
 ${g2o_SOURCE_DIR}/stuff 
@@ -88,6 +132,8 @@ ${G2O_EIGEN3_INCLUDE})
 # Include the subdirectories
 ADD_LIBRARY(g2o ${G2O_LIB_TYPE}
 #types
+g2o/types/se2.h
+g2o/types/g2o_types_slam2d_api.h
 g2o/types/types_sba.h
 g2o/types/types_six_dof_expmap.h
 g2o/types/types_sba.cpp
@@ -97,7 +143,14 @@ g2o/types/types_seven_dof_expmap.h
 g2o/types/se3quat.h
 g2o/types/se3_ops.h
 g2o/types/se3_ops.hpp
+g2o/types/vertex_se2.h
+g2o/types/vertex_se2.cpp
+g2o/types/g2o_types_slam3d_api.h
+g2o/types/isometry3d_mappings.cpp
+g2o/types/isometry3d_mappings.h
+g2o/types/g2o_types_sba_api.h
 #core
+g2o/core/eigen_types.h
 g2o/core/base_edge.h
 g2o/core/base_binary_edge.h
 g2o/core/hyper_graph_action.cpp
@@ -170,5 +223,8 @@ g2o/stuff/os_specific.c
 g2o/stuff/os_specific.h
 g2o/stuff/string_tools.cpp
 g2o/stuff/property.cpp       
-g2o/stuff/property.h       
+g2o/stuff/property.h
+g2o/stuff/g2o_stuff_api.h
+g2o/stuff/sparse_helper.cpp
+g2o/stuff/sparse_helper.h
 )

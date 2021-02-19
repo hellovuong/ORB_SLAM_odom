@@ -27,7 +27,7 @@
 #include "Thirdparty/DBoW2/DBoW2/FeatureVector.h"
 #include "ORBVocabulary.h"
 #include "ORBextractor.h"
-#include "Se2.h"
+#include "Thirdparty/g2o/g2o/types/se2.h"
 
 #include <opencv2/opencv.hpp>
 
@@ -57,7 +57,7 @@ public:
     Frame(const cv::Mat &imGray, const double &timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, const float &bf, const float &thDepth);
 
     // Constructor for Odometry-Monocular
-    Frame(const cv::Mat &imGray, const Se2 &odo, const double timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, cv::Mat &extParaBc, const float &bf, const float &thDepth);
+    Frame(const cv::Mat &imGray, const g2o::SE2 &odo, const double timeStamp, ORBextractor* extractor,ORBVocabulary* voc, cv::Mat &K, cv::Mat &distCoef, cv::Mat &extParaBc, const float &bf, const float &thDepth);
 
     // Extract ORB on the image. 0 for left image and 1 for right image.
     void ExtractORB(int flag, const cv::Mat &im);
@@ -102,7 +102,7 @@ public:
 
 public:
     // Odometry measurement
-    Se2 odom;
+    g2o::SE2 odom;
 
     // Extrinsic parameter
     cv::Mat Tbc;

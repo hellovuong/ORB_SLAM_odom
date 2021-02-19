@@ -89,8 +89,8 @@ int main(int argc, char **argv)
         getline(odomFile, odomLine);
         istringstream iss(odomLine);
         iss >> x >> y >> theta;
-        Se2 odom(x, y, theta);
-
+        g2o::SE2 odom(x, y, theta);
+        //std::cout << x << " " << y << " " << theta << std::endl;
         double tframe = 0;
 
 #ifdef COMPILEDWITHC11
@@ -132,7 +132,7 @@ int main(int argc, char **argv)
 
     // Save camera trajectory
     SLAM.SaveKeyFrameTrajectoryVN("KeyFrameTrajectory.txt");
-
+    SLAM.SaveKeyFrameTrajectoryTUM_VN("KF_TUM_VN.txt");
     return 0;
 }
 void LoadImages(const string &strFile, vector<string> &vstrImageFilenames, vector<double> &vTimestamps)

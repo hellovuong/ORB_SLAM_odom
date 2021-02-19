@@ -90,7 +90,7 @@ void KeyFrame::SetPose(const cv::Mat &Tcw_)
 // LETS BEGIN HERE
 void KeyFrame::SetPoseByOdomTo(KeyFrame *refKF)
 {
-    Se2 dOdom = refKF->odom - odom;
+    g2o::SE2 dOdom = refKF->odom - odom;
     cv::Mat dCvOdom = Tbc.inv() * dOdom.toCvSE3() * Tbc;
     SetPose(dCvOdom * refKF->GetPose());
 }

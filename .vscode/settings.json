@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "*.txx": "cpp",
+        "atomic": "cpp",
+        "mutex": "cpp",
+        "iostream": "cpp",
+        "chrono": "cpp"
+    }
+}
