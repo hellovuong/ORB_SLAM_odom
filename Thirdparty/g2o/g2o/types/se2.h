@@ -154,14 +154,14 @@ namespace g2o {
                 0, 0, 1, 0,
                 0, 0, 0, 1);
       }
-      inline g2o::SE2& fromCvSE3(const cv::Mat &mat)
+      static inline g2o::SE2& fromCvSE3(const cv::Mat &mat)
       {
         float yaw = std::atan2(mat.at<float>(1,0), mat.at<float>(0,0));
         double theta = normalize_theta(yaw);
         double x = mat.at<float>(0,3);
         double y = mat.at<float>(1,3);
-        SE2 results = SE2(x,y,theta);
-        return results;
+        SE2 result = SE2(x,y,theta);
+        return result;
       }
 
     protected:

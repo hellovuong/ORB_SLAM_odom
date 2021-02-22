@@ -87,7 +87,7 @@ int main(int argc, char **argv)
         // Read image from file
         im = cv::imread(vstrImageFilenames[ni],CV_LOAD_IMAGE_UNCHANGED);
         double tframe = vTimestamps[ni];
-        std::cout<<tframe<<' '<<vOdo[ni].translation().x()<<' '<<vOdo[ni].translation().y()<<std::endl;
+        //std::cout<<tframe<<' '<<vOdo[ni].translation().x()<<' '<<vOdo[ni].translation().y()<<std::endl;
         if(im.empty())
         {
             cerr << endl << "Failed to load image at: " << vstrImageFilenames[ni] << endl;

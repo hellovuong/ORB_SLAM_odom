@@ -952,10 +952,10 @@ bool Tracking::TrackWithMotionModelOdom()
         mLastFrame.SetPose(dCvOdom * lastKf->GetPose());
     }
     g2o::SE2 dOdom = mLastFrame.odom - mCurrentFrame.odom;
-    std::cout << mTcb << std::endl;
+    //std::cout << mTcb << std::endl;
     mVelocityOdom = mTcb * dOdom.toCvSE3() * mTbc;
-    std::cout<<mVelocityOdom<<std::endl;
-    std::cout<<mVelocityOdom*mLastFrame.mTcw<<std::endl;
+    //std::cout<<mVelocityOdom<<std::endl;
+    //std::cout<<mVelocityOdom*mLastFrame.mTcw<<std::endl;
     //mCurrentFrame.SetPose(mLastFrame.mTcw);
     mCurrentFrame.SetPose(mVelocityOdom*mLastFrame.mTcw);
     // END

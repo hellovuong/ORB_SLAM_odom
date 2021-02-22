@@ -26,6 +26,7 @@
 #include "KeyFrame.h"
 #include "LoopClosing.h"
 #include "Frame.h"
+#include "EdgeSE2XYZ.h"
 
 #include "Thirdparty/g2o/g2o/types/types_seven_dof_expmap.h"
 
@@ -44,6 +45,8 @@ public:
                                        const unsigned long nLoopKF=0, const bool bRobust = true);
     void static LocalBundleAdjustment(KeyFrame* pKF, bool *pbStopFlag, Map *pMap);
     int static PoseOptimization(Frame* pFrame);
+
+    void static LocalBundleAdjustmentSE2(KeyFrame* pKF, bool *pbStopFlag, Map *pMap);
 
     // if bFixScale is true, 6DoF optimization (stereo,rgbd), 7DoF otherwise (mono)
     void static OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* pCurKF,

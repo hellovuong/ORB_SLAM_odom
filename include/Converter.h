@@ -37,6 +37,7 @@ public:
     static std::vector<cv::Mat> toDescriptorVector(const cv::Mat &Descriptors);
 
     static g2o::SE2 toSE2(const cv::Mat &cvT);
+    
     static double normalize_angle(double theta)
     {
         if (theta >= -M_PI && theta < M_PI)
@@ -50,6 +51,19 @@ public:
             theta += 2*M_PI;
 
         return theta;
+    }
+
+    static inline Eigen::Matrix3d skew(const Vector3d&v)
+    {
+        Eigen::Matrix3d m;
+        m.fill(0.);
+        m(0,1)  = -v(2);
+        m(0,2)  =  v(1);
+        m(1,2)  = -v(0);
+        m(1,0)  =  v(2);
+        m(2,0) = -v(1);
+        m(2,1) = v(0);
+        return m;
     }
 
     static g2o::SE3Quat toSE3Quat(const cv::Mat &cvT);
