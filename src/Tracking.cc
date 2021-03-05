@@ -96,11 +96,17 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     mTcb.rowRange(0,3).col(3) = -Rbc.t()*tbc;
     mbf = fSettings["Camera.bf"];
 */    
-     
+
     // Uncomment this for OpenLoris
     mTbc = Constants::bTc;
     mTcb = Constants::bTc.inv();
+/*
+    cv::Mat temp = cv::Mat::zeros(4,4,CV_64F);
     
+    fSettings["Tbc"] >> temp;
+    temp.copyTo(mTbc);
+    mTcb = mTbc.inv();
+*/
     float fps = fSettings["Camera.fps"];
     if(fps==0)
         fps=30;
@@ -108,6 +114,8 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     // Max/Min Frames to insert keyframes and to check relocalisation
     mMinFrames = 0;
     mMaxFrames = fps;
+
+    
 
     cout << endl << "Camera Parameters: " << endl;
     cout << "- fx: " << fx << endl;
@@ -122,7 +130,8 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     cout << "- p2: " << DistCoef.at<float>(3) << endl;
     cout << "- fps: " << fps << endl;
 
-
+    cout << endl << "Camera Extrinsics: " << endl;
+    cout << endl << mTbc << endl;
     int nRGB = fSettings["Camera.RGB"];
     mbRGB = nRGB;
 
@@ -131,6 +140,17 @@ Tracking::Tracking(System *pSys, ORBVocabulary* pVoc, FrameDrawer *pFrameDrawer,
     else
         cout << "- color order: BGR (ignored if grayscale)" << endl;
 
+    // Load Odometry pareameters
+    
+    odom_x_noise = fSettings["Odo_x_steady_noise"];
+    odom_y_noise = fSettings["Odo_y_steady_noise"];
+    odom_theta_noise = fSettings["Odo_theta_steady_noise"];
+    
+    cout << "Odometry parameters: " << endl;
+    cout << "Odo_x_steady_noise: " << odom_x_noise << endl;
+    cout << "Odo_y_steady_noise: " << odom_y_noise << endl;
+    cout << "Odo_theta_steady_noise: " << odom_theta_noise << endl;
+    
     // Load ORB parameters
 
     int nFeatures = fSettings["ORBextractor.nFeatures"];
@@ -212,7 +232,7 @@ cv::Mat Tracking::GrabImageMonocular(const cv::Mat &im, const double &timestamp)
         mCurrentFrame = Frame(mImGray,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mbf,mThDepth);
 
     Track();
-
+    
     return mCurrentFrame.mTcw.clone();
 }
 
@@ -241,7 +261,7 @@ cv::Mat Tracking::GrabImageOdomMono(const cv::Mat &im, const g2o::SE2 &odo, cons
         mCurrentFrame = Frame(mImGray,odo,timestamp,mpORBextractorLeft,mpORBVocabulary,mK,mDistCoef,mTbc,mbf,mThDepth);
 
     Track();
-
+    lastOdom = mCurrentFrame.odom;
     return mCurrentFrame.mTcw.clone();
 }
 
@@ -281,6 +301,10 @@ void Tracking::Track()
         {
             // Local Mapping is activated. This is the normal behaviour, unless
             // you explicitly activate the "only tracking" mode.
+
+            // Do Preintegration for Odometry.
+            PreintergrateOdom();
+            // Do Preintegration for IMU.
 
             if(mState==OK)
             {
@@ -637,17 +661,17 @@ void Tracking::CreateInitialMapMonocular()
     // Bundle Adjustment
     cout << "New Map created with " << mpMap->MapPointsInMap() << " points" << endl;
 
-    Optimizer::GlobalBundleAdjustemnt(mpMap,20);
-
+    //Optimizer::GlobalBundleAdjustemnt(mpMap,20);
+    Optimizer::GlobalBundleAdjustemntSE2(mpMap,20);
     // Set median depth to 1
     float medianDepth = pKFini->ComputeSceneMedianDepth(2);
     float invMedianDepth = 1.0f/medianDepth;
 
     if(medianDepth<0 || pKFcur->TrackedMapPoints(1)<100)
     {
-        //cout << "Wrong initialization, reseting..." << endl;
-        //Reset();
-        //return;
+        cout << "Wrong initialization, reseting..." << endl;
+        Reset();
+        return;
     }
 
     // Scale initial baseline
@@ -1014,6 +1038,43 @@ bool Tracking::TrackWithMotionModelOdom()
     return nmatchesMap>=10;
 }
 
+void Tracking::PreintergrateOdom()
+{
+    // std::cout << odom_y_noise << std::endl;
+    // std::cout << odom_x_noise << std::endl;
+    // std::cout << odom_theta_noise << std::endl;
+    std::cout << "Start doing Preintergrate Odom: " << std::endl;
+    // preintegration
+    Eigen::Map<Vector3d> meas(preSE2.meas);
+    g2o::SE2 odok = mCurrentFrame.odom - lastOdom;
+    Vector2d odork(odok.translation().x(), odok.translation().y());
+    Matrix2d Phi_ik = Rotation2Dd(meas[2]).toRotationMatrix();
+    meas.head<2>() += Phi_ik * odork;
+    meas[2] += odok.rotation().angle();
+
+    Matrix3d Ak = Matrix3d::Identity();
+    Matrix3d Bk = Matrix3d::Identity();
+    Ak.block<2,1>(0,2) = Phi_ik * Vector2d(-odork[1], odork[0]);
+    Bk.block<2,2>(0,0) = Phi_ik;
+    Eigen::Map<Matrix3d, RowMajor> Sigmak(preSE2.cov);
+    Matrix3d Sigma_vk = Matrix3d::Identity();
+    Sigma_vk(0,0) = (odom_x_noise * odom_x_noise);
+    Sigma_vk(1,1) = (odom_y_noise * odom_y_noise);
+    Sigma_vk(2,2) = (odom_theta_noise * odom_theta_noise);
+    Matrix3d Sigma_k_1 = Ak * Sigmak * Ak.transpose() + Bk * Sigma_vk * Bk.transpose();
+    Sigmak = Sigma_k_1;
+    //std::cout<<"preSE2.meas:"<<std::endl;
+    //std::cout<<preSE2.meas[0]<<' '<<preSE2.meas[1]<<' '<<preSE2.meas[2]<<std::endl;
+    //std::cout<<"Covariance:"<<std::endl;
+    //std::cout<<Sigma_k_1<<std::endl;
+    //for(int i=0;i<3;i++) {
+    //    for(int j=0;j<3;j++)
+    //        std::cout<<preSE2.cov[i*3+j]<<' ';
+    //        std::cout<<endl;
+    //        }
+    std::cout << " Finish Preintergrate" << std::endl; 
+}
+
 bool Tracking::TrackLocalMap()
 {
     // We have an estimation of the camera pose and some map points tracked in the frame.
@@ -1249,10 +1310,17 @@ void Tracking::CreateNewKeyFrame()
         }
     }
 
+    //Add Odometry Integration to KeyFrames.
+    KeyFrame* ptrLastKF = mpLastKeyFrame;
+    mpLastKeyFrame->odomFromThis = std::make_pair(pKF, preSE2);
+    pKF->odomToThis = std::make_pair(ptrLastKF, preSE2);
+
     mpLocalMapper->InsertKeyFrame(pKF);
 
     mpLocalMapper->SetNotStop(false);
 
+    memset(preSE2.cov,0,sizeof preSE2.cov);
+    memset(preSE2.meas,0,sizeof preSE2.meas);
     mnLastKeyFrameId = mCurrentFrame.mnId;
     mpLastKeyFrame = pKF;
 }

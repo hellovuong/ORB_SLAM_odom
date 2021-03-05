@@ -45,9 +45,14 @@ public:
                                        const unsigned long nLoopKF=0, const bool bRobust = true);
     void static LocalBundleAdjustment(KeyFrame* pKF, bool *pbStopFlag, Map *pMap);
     int static PoseOptimization(Frame* pFrame);
-
+    void static BundleAdjustmentSE2(const std::vector<KeyFrame*> &vpKF, const std::vector<MapPoint*> &vpMP,
+                                 int nIterations = 5, bool *pbStopFlag=NULL, const unsigned long nLoopKF=0,
+                                 const bool bRobust = true);
+    void static GlobalBundleAdjustemntSE2(Map* pMap, int nIterations=5, bool *pbStopFlag=NULL,
+                                       const unsigned long nLoopKF=0, const bool bRobust = true);
+    int static PoseOptimizationSE2(Frame* pFrame);
     void static LocalBundleAdjustmentSE2(KeyFrame* pKF, bool *pbStopFlag, Map *pMap);
-
+    void static LocalBundleAdjustmentSE2_odom(KeyFrame* pKF, bool *pbStopFlag, Map *pMap);
     // if bFixScale is true, 6DoF optimization (stereo,rgbd), 7DoF otherwise (mono)
     void static OptimizeEssentialGraph(Map* pMap, KeyFrame* pLoopKF, KeyFrame* pCurKF,
                                        const LoopClosing::KeyFrameAndPose &NonCorrectedSim3,

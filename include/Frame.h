@@ -33,6 +33,20 @@
 
 namespace ORB_SLAM2
 {
+
+
+struct PreSE2
+{
+public:
+    double meas[3];
+    double cov[9]; // 3*3, RowMajor 
+    PreSE2(){
+        memset(meas,0,sizeof meas);
+        memset(cov,0,sizeof cov);
+    }
+    ~PreSE2(){}
+};
+
 #define FRAME_GRID_ROWS 48
 #define FRAME_GRID_COLS 64
 

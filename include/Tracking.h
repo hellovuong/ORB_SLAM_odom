@@ -129,7 +129,8 @@ protected:
     void UpdateLastFrame();
     bool TrackWithMotionModel();
 
-    // LETS BEGIN HERE
+    // LETS BEGIN HERE - odom stuffs
+    void PreintergrateOdom();
     bool TrackWithMotionModelOdom();
     bool TrackReferenceKeyFrameOdom();
     int lastNewestChangedKeyFrameId = 0;
@@ -193,6 +194,11 @@ protected:
     cv::Mat mDistCoef;
     float mbf;
 
+    //Odometry Noise
+    float odom_x_noise;
+    float odom_y_noise;
+    float odom_theta_noise;
+
     //New KeyFrame rules (according to fps)
     int mMinFrames;
     int mMaxFrames;
@@ -221,7 +227,9 @@ protected:
     cv::Mat mVelocityOdom;
 
     // END
-
+    PreSE2 preSE2;
+    g2o::SE2 lastOdom;
+    
     //Color order (true RGB, false BGR, ignored if grayscale)
     bool mbRGB;
 

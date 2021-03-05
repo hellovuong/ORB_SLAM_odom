@@ -22,6 +22,7 @@
 #include "Converter.h"
 #include "ORBmatcher.h"
 #include<mutex>
+#include<memory>
 
 namespace ORB_SLAM2
 {
@@ -43,6 +44,12 @@ KeyFrame::KeyFrame(Frame &F, Map *pMap, KeyFrameDatabase *pKFDB):
     mpORBvocabulary(F.mpORBvocabulary), mbFirstConnection(true), mpParent(NULL), mbNotErase(false),
     mbToBeErased(false), mbBad(false), mHalfBaseline(F.mb/2), mpMap(pMap)
 {
+
+    KeyFrame* pKF = NULL;
+    
+    odomFromThis = make_pair(pKF, PreSE2());
+    odomToThis = make_pair(pKF, PreSE2());
+
     odom = F.odom;
     F.Tbc.copyTo(Tbc);
 

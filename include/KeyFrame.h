@@ -30,6 +30,7 @@
 #include "KeyFrameDatabase.h"
 
 #include <mutex>
+#include <memory>
 
 
 namespace ORB_SLAM2
@@ -119,6 +120,10 @@ public:
 
     // The following variables are accesed from only 1 thread or never change (no mutex needed).
 public:
+
+    std::vector<g2o::SE2> odom_LastKF;
+    std::pair<KeyFrame*, PreSE2> odomToThis;
+    std::pair<KeyFrame*, PreSE2> odomFromThis;
 
     g2o::SE2 odom;
     cv::Mat Tbc;
