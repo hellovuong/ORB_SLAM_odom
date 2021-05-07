@@ -1,5 +1,7 @@
-Adaptation with odometry assistance. See `Examples/OdomMono`.
+---
+ORB_SLAM3 supports OpenLoris Odometry please visit:  https://github.com/hellovuong/ORB_SLAM3
 
+Adaptation with odometry assistance. See `Examples/OdomMono`.
 If you use this repo for academic publication, please cite:
 
 - Fan Zheng, Hengbo Tang, Yun-Hui Liu. "Odometry-Vision-Based Ground Vehicle Motion Estimation With SE(2)-Constrained SE(3) Poses". IEEE Transactions on Cybernetics, vol. 49, no. 7, 2019. \[[code](https://github.com/izhengfan/se2clam)\]
