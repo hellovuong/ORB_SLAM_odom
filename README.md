@@ -1,6 +1,12 @@
----
-ORB_SLAM3 supports OpenLoris Odometry please visit:  https://github.com/hellovuong/ORB_SLAM3
 
+ORB_SLAM3 supports OpenLoris Odometry please visit:  https://github.com/hellovuong/ORB_SLAM3
+Usage Mono Odom:
+```
+./mono_odom path_to_vocabulary path_to_settings path_to_sequence (name_sequence)
+```
+Notice that you need to copy odom data file in folder `/Examples/Monocular-Odom/OpenLoris_Odom` to OpenLoris folder and change the name of odom file to `odom_interp.txt`
+
+---
 Adaptation with odometry assistance. See `Examples/OdomMono`.
 If you use this repo for academic publication, please cite:
 
