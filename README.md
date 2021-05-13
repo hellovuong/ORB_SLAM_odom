@@ -1,6 +1,7 @@
 
 ORB_SLAM3 supports OpenLoris Odometry please visit:  https://github.com/hellovuong/ORB_SLAM3
-Usage Mono Odom:
+
+Usage Mono Odom in OpenLoris datasets:
 ```
 ./mono_odom path_to_vocabulary path_to_settings path_to_sequence (name_sequence)
 ```
