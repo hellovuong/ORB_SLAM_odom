@@ -5,7 +5,9 @@ Usage Mono Odom in OpenLoris datasets:
 ```
 ./mono_odom path_to_vocabulary path_to_settings path_to_sequence (name_sequence)
 ```
+
 Notice that you need to copy odom data file in folder `/Examples/Monocular-Odom/OpenLoris_Odom` to OpenLoris folder and change the name of odom file to `odom_interp.txt`
+Scirpt to interpolate odometry file can be found [here](https://gist.github.com/hellovuong/a91b7717b8cbb781a4db10fd875f6775) 
 
 ---
 Adaptation with odometry assistance. See `Examples/OdomMono`.
